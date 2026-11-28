@@ -2,6 +2,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const readline = require('node:readline');
 const { spawn, spawnSync } = require('node:child_process');
+const store = require('./result-store.cjs');
 
 function parseCommand(input) {
   if (typeof input !== 'string') throw new Error('command 必须是字符串');
@@ -45,37 +46,67 @@ function resolveCli() {
   throw new Error('无法定位 douyin-world 的实际程序，请检查 CLI 安装');
 }
 
-function runCli(command) {
+async function runCli(command) {
   const args = parseCommand(command);
   const [exe, script] = resolveCli();
-  return new Promise((resolve, reject) => {
+  const record = store.begin();
+  let out, err;
+  try {
+    out = fs.openSync(store.file(record, 'stdout'), 'wx', 0o600);
+    err = fs.openSync(store.file(record, 'stderr'), 'wx', 0o600);
     const child = spawn(exe, script ? [script, ...args] : args, {
       env: script ? { ...process.env, ELECTRON_RUN_AS_NODE: '1' } : process.env,
-      shell: false, windowsHide: true, stdio: ['ignore', 'pipe', 'pipe']
+      shell: false, windowsHide: true, stdio: ['ignore', out, err]
     });
-    let stdout = '', stderr = '';
-    child.stdout.setEncoding('utf8'); child.stderr.setEncoding('utf8');
-    child.stdout.on('data', chunk => { stdout += chunk; });
-    child.stderr.on('data', chunk => { stderr += chunk; });
-    child.on('error', reject);
-    child.on('close', (exitCode, signal) => resolve({ stdout, stderr, exitCode, signal }));
-  });
+    const status = await new Promise(resolve => {
+      let spawnError;
+      child.on('error', error => { spawnError = error.message; });
+      child.on('close', (exitCode, signal) => resolve({ exitCode, signal, ...(spawnError ? { spawnError } : {}) }));
+    });
+    fs.closeSync(out); out = undefined;
+    fs.closeSync(err); err = undefined;
+    return await store.finish(record, status);
+  } finally {
+    if (out !== undefined) fs.closeSync(out);
+    if (err !== undefined) fs.closeSync(err);
+  }
 }
 
 const tools = [{ name: 'douyin-world', description: '运行 douyin-world CLI 命令。修改、删除及付费操作应先获得用户确认。', inputSchema: { type: 'object', properties: { command: { type: 'string', description: 'CLI 参数，不包含 douyin-world；含空格的参数使用引号。' } }, required: ['command'], additionalProperties: false } }];
+const resultProperties = {
+  result_id: { type: 'string', description: 'Previous CLI result_id' },
+  stream: { type: 'string', enum: ['stdout', 'stderr'], default: 'stdout' },
+  offset: { type: 'integer', minimum: 0, description: 'UTF-8 byte offset, not character index' }
+};
+tools[0].description += ' Large output is stored losslessly; use read_result and search_result with the returned ID. Do not rerun commands to retrieve stored output.';
+tools.push(
+  { name: 'read_result', description: 'Read one bounded page from a stored CLI output. Continue with next_offset until eof; base64 indicates non-UTF-8 bytes.', inputSchema: {
+    type: 'object', properties: { ...resultProperties, max_bytes: { type: 'integer', minimum: 1, maximum: store.pageBudget } },
+    required: ['result_id'], additionalProperties: false
+  }},
+  { name: 'search_result', description: 'Find the next literal UTF-8 match in stored CLI output; returns byte offsets, not the full result. Use read_result to inspect the match.', inputSchema: {
+    type: 'object', properties: { ...resultProperties, query: { type: 'string', minLength: 1 } },
+    required: ['result_id', 'query'], additionalProperties: false
+  }}
+);
 const send = message => process.stdout.write(JSON.stringify(message) + '\n');
 async function handle(message) {
   if (!Object.hasOwn(message, 'id')) return;
   const { id, method, params = {} } = message;
   try {
     let result;
-    if (method === 'initialize') result = { protocolVersion: params.protocolVersion, capabilities: { tools: {} }, serverInfo: { name: 'douyin-world-mcp', version: '1.0.0' } };
+    if (method === 'initialize') result = { protocolVersion: params.protocolVersion, capabilities: { tools: {} }, serverInfo: { name: 'douyin-world-mcp', version: '1.1.0' } };
     else if (method === 'ping') result = {};
     else if (method === 'tools/list') result = { tools };
     else if (method === 'tools/call') {
-      if (params.name !== 'douyin-world') throw new Error('未知工具');
-      const output = await runCli(params.arguments?.command);
-      result = { content: [{ type: 'text', text: JSON.stringify(output) }], isError: output.exitCode !== 0 };
+      let output, isError = false;
+      if (params.name === 'douyin-world') {
+        output = await runCli(params.arguments?.command);
+        isError = output.exitCode !== 0;
+      } else if (params.name === 'read_result') output = await store.readResult(params.arguments || {});
+      else if (params.name === 'search_result') output = await store.searchResult(params.arguments || {});
+      else throw new Error('未知工具');
+      result = { content: [{ type: 'text', text: JSON.stringify(output) }], isError };
     } else return send({ jsonrpc: '2.0', id, error: { code: -32601, message: 'Method not found' } });
     send({ jsonrpc: '2.0', id, result });
   } catch (error) {
