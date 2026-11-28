@@ -15,13 +15,13 @@ cd douyin-world-mcp
 
 ## Agent 自动配置（推荐）
 
-将以下英文提示词直接发送给支持终端操作的 Codex 或 Claude Code Agent。无需手动替换配置路径，Agent 应根据本机环境完成注册和验证。
+将以下提示词直接发送给支持终端操作的 Agent，无需指定客户端或手动填写路径。
 
 ```text
-Set up douyin-world MCP for the agent client I am currently using (Codex or Claude Code). Clone https://github.com/NoRegret-L/douyin-world-mcp into a persistent local directory, or reuse an existing checkout without overwriting local changes. Read the complete README.md and follow its installation and client-specific configuration instructions now. Verify Node.js >= 18 and run `douyin-world --help` before proceeding. If either prerequisite is missing, report it instead of guessing an installation source. Run `npm test`. Register the local stdio MCP server using the actual absolute path to douyin-world-mcp.cjs and the appropriate client configuration or MCP CLI. Preserve existing MCP servers and settings; do not create duplicate entries or expose credentials. Verify registration with `codex mcp list` or `claude mcp list` as appropriate. If a restart is required, tell me exactly how to reconnect and check the three tools: douyin-world, read_result, and search_result. Do not execute commands that modify data or incur charges. Report what was configured, the actual path, and any remaining blockers.
+Set up douyin-world MCP from https://github.com/NoRegret-L/douyin-world-mcp and follow the repository's complete README.md instructions now. Clone it into a persistent local directory or reuse an existing checkout without overwriting local changes. Detect the current environment and use the appropriate MCP configuration method. Verify prerequisites, run the tests, and register the server using its actual absolute path. Preserve existing settings and MCP servers. Verify that the server is registered and that its tools are available. If a restart or manual action is required, report the exact steps. Do not execute commands that modify business data or incur charges. Report the configuration result and any remaining blockers.
 ```
 
-此提示词直接配置 MCP 服务，不依赖 `npx skills`，也不要求安装额外的 Agent Skill。若 Agent 无终端或配置文件权限，请使用下方手动配置方法。
+若 Agent 无终端或配置文件权限，请使用下方手动配置方法。
 
 ## 客户端配置
 
