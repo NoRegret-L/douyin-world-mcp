@@ -13,6 +13,16 @@ cd douyin-world-mcp
 
 已有仓库使用 `git pull --ff-only` 更新，不需要 npm install。
 
+## Agent 自动配置（推荐）
+
+将以下英文提示词直接发送给支持终端操作的 Codex 或 Claude Code Agent。无需手动替换配置路径，Agent 应根据本机环境完成注册和验证。
+
+```text
+Set up douyin-world MCP for the agent client I am currently using (Codex or Claude Code). Clone https://github.com/NoRegret-L/douyin-world-mcp into a persistent local directory, or reuse an existing checkout without overwriting local changes. Read the complete README.md and follow its installation and client-specific configuration instructions now. Verify Node.js >= 18 and run `douyin-world --help` before proceeding. If either prerequisite is missing, report it instead of guessing an installation source. Run `npm test`. Register the local stdio MCP server using the actual absolute path to douyin-world-mcp.cjs and the appropriate client configuration or MCP CLI. Preserve existing MCP servers and settings; do not create duplicate entries or expose credentials. Verify registration with `codex mcp list` or `claude mcp list` as appropriate. If a restart is required, tell me exactly how to reconnect and check the three tools: douyin-world, read_result, and search_result. Do not execute commands that modify data or incur charges. Report what was configured, the actual path, and any remaining blockers.
+```
+
+此提示词直接配置 MCP 服务，不依赖 `npx skills`，也不要求安装额外的 Agent Skill。若 Agent 无终端或配置文件权限，请使用下方手动配置方法。
+
 ## 客户端配置
 
 以下示例使用 Windows 路径，请替换为实际绝对路径；macOS/Linux 使用对应的绝对路径。若客户端无法找到 node 或 CLI，请检查其 PATH，必要时填写 node 的绝对路径。先运行 `node --version` 和 `douyin-world --help` 确认本机环境。
