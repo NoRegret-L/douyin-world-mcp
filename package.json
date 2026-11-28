@@ -1,0 +1,13 @@
+{
+  "name": "douyin-world-mcp",
+  "version": "1.1.1",
+  "private": true,
+  "description": "Local stdio MCP bridge for the installed douyin-world CLI",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node douyin-world-mcp.cjs",
+    "test": "node --test douyin-world-mcp.test.cjs"
+  }
+}

@@ -3,6 +3,7 @@ const path = require('node:path');
 const readline = require('node:readline');
 const { spawn, spawnSync } = require('node:child_process');
 const store = require('./result-store.cjs');
+const { name, version } = require('./package.json');
 
 function parseCommand(input) {
   if (typeof input !== 'string') throw new Error('command 必须是字符串');
@@ -72,7 +73,7 @@ async function runCli(command) {
   }
 }
 
-const tools = [{ name: 'douyin-world', description: '运行 douyin-world CLI 命令。修改、删除及付费操作应先获得用户确认。', inputSchema: { type: 'object', properties: { command: { type: 'string', description: 'CLI 参数，不包含 douyin-world；含空格的参数使用引号。' } }, required: ['command'], additionalProperties: false } }];
+const tools = [{ name: 'douyin-world', description: 'Execute a douyin-world CLI command. Obtain user confirmation before modifying or deleting data or performing paid operations.', inputSchema: { type: 'object', properties: { command: { type: 'string', description: 'CLI arguments without the douyin-world executable name; quote arguments containing spaces.' } }, required: ['command'], additionalProperties: false } }];
 const resultProperties = {
   result_id: { type: 'string', description: 'Previous CLI result_id' },
   stream: { type: 'string', enum: ['stdout', 'stderr'], default: 'stdout' },
@@ -80,11 +81,11 @@ const resultProperties = {
 };
 tools[0].description += ' Large output is stored losslessly; use read_result and search_result with the returned ID. Do not rerun commands to retrieve stored output.';
 tools.push(
-  { name: 'read_result', description: 'Read one bounded page from a stored CLI output. Continue with next_offset until eof; base64 indicates non-UTF-8 bytes.', inputSchema: {
+  { name: 'read_result', description: 'Read one bounded page from a stored CLI output. Read only the bytes relevant to the current task. Use next_offset to continue if needed; eof indicates the end. Base64 indicates bytes that could not be decoded as UTF-8.', inputSchema: {
     type: 'object', properties: { ...resultProperties, max_bytes: { type: 'integer', minimum: 1, maximum: store.pageBudget } },
     required: ['result_id'], additionalProperties: false
   }},
-  { name: 'search_result', description: 'Find the next literal UTF-8 match in stored CLI output; returns byte offsets, not the full result. Use read_result to inspect the match.', inputSchema: {
+  { name: 'search_result', description: 'Find the next literal UTF-8 match in stored CLI output. Prefer this over scanning every page when the target is known. Returns byte offsets; use read_result to inspect the match.', inputSchema: {
     type: 'object', properties: { ...resultProperties, query: { type: 'string', minLength: 1 } },
     required: ['result_id', 'query'], additionalProperties: false
   }}
@@ -95,7 +96,7 @@ async function handle(message) {
   const { id, method, params = {} } = message;
   try {
     let result;
-    if (method === 'initialize') result = { protocolVersion: params.protocolVersion, capabilities: { tools: {} }, serverInfo: { name: 'douyin-world-mcp', version: '1.1.0' } };
+    if (method === 'initialize') result = { protocolVersion: params.protocolVersion, capabilities: { tools: {} }, serverInfo: { name, version } };
     else if (method === 'ping') result = {};
     else if (method === 'tools/list') result = { tools };
     else if (method === 'tools/call') {

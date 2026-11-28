@@ -3,7 +3,7 @@ const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
 const path = require('node:path');
 
-test('MCP exposes one tool and passes quoted arguments without shell execution', async () => {
+test('MCP exposes the current three-tool contract and passes quoted arguments without shell execution', async () => {
   const server = spawn(process.execPath, [path.join(__dirname, 'douyin-world-mcp.cjs')], {
     env: { ...process.env, DOUYIN_WORLD_RESULT_BYTES: '8192', DOUYIN_WORLD_EXECUTABLE: process.execPath, DOUYIN_WORLD_SCRIPT: path.join(__dirname, 'douyin-world-mcp-fixture.cjs') },
     stdio: ['pipe', 'pipe', 'pipe']
@@ -26,8 +26,8 @@ test('MCP exposes one tool and passes quoted arguments without shell execution',
   server.stdin.end();
   const exit = await new Promise(resolve => server.on('close', resolve));
   assert.equal(exit, 0);
-  assert.equal(replies.find(x => x.id === 2).result.tools.length, 3);
-  assert.equal(replies.find(x => x.id === 2).result.tools[0].name, 'douyin-world');
+  assert.deepEqual(replies.find(x => x.id === 1).result.serverInfo, { name: require('./package.json').name, version: require('./package.json').version });
+  assert.deepEqual(replies.find(x => x.id === 2).result.tools.map(tool => tool.name), ['douyin-world', 'read_result', 'search_result']);
   const result = JSON.parse(replies.find(x => x.id === 3).result.content[0].text);
   assert.deepEqual(JSON.parse(result.stdout), ['guide', 'two words', '&', 'whoami']);
   assert.equal(result.exitCode, 0);
