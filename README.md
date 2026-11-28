@@ -9,10 +9,64 @@
 ```powershell
 git clone https://github.com/NoRegret-L/douyin-world-mcp.git
 cd douyin-world-mcp
-npm test
 ```
 
 已有仓库使用 `git pull --ff-only` 更新，不需要 npm install。
+
+## 客户端配置
+
+以下示例使用 Windows 路径，请替换为实际绝对路径；macOS/Linux 使用对应的绝对路径。若客户端无法找到 node 或 CLI，请检查其 PATH，必要时填写 node 的绝对路径。先运行 `node --version` 和 `douyin-world --help` 确认本机环境。
+
+## Codex
+
+在 `~/.codex/config.toml`（Windows：`%USERPROFILE%/.codex/config.toml`）中合并：
+
+```toml
+[mcp_servers.douyin-world]
+command = "node"
+args = ["C:/path/douyin-world-mcp/douyin-world-mcp.cjs"]
+
+[mcp_servers.douyin-world.env]
+DOUYIN_WORLD_RESULT_BYTES = "8192"
+```
+
+也可以通过 CLI 注册（与手动配置二选一）：
+
+```bash
+codex mcp add douyin-world -- node "C:/path/douyin-world-mcp/douyin-world-mcp.cjs"
+codex mcp list
+```
+
+重启 Codex，通过 `/mcp` 检查连接。[官方文档](https://developers.openai.com/codex/mcp)。
+
+## Claude Code
+
+```bash
+claude mcp add --transport stdio --scope user douyin-world -- node "C:/path/douyin-world-mcp/douyin-world-mcp.cjs"
+claude mcp list
+```
+
+使用默认传输预算 8192 字节。重新启动 Claude Code，通过 `/mcp` 检查状态。项目级共享配置可使用项目根目录的 `.mcp.json`，格式如下节所示；不要提交本机绝对路径或凭据。[官方文档](https://code.claude.com/docs/en/mcp)。
+
+## Claude Desktop
+
+打开 Settings → Developer → Edit Config，将以下内容合并到 `claude_desktop_config.json`：
+
+```json
+{
+  "mcpServers": {
+    "douyin-world": {
+      "command": "node",
+      "args": ["C:/path/douyin-world-mcp/douyin-world-mcp.cjs"],
+      "env": {
+        "DOUYIN_WORLD_RESULT_BYTES": "8192"
+      }
+    }
+  }
+}
+```
+
+完全退出并重启应用。以上均为本地 stdio 配置，不适用于仅支持远程 HTTP 的客户端。
 
 ## Zed 配置
 
@@ -59,6 +113,22 @@ DOUYIN_WORLD_RESULT_BYTES 默认 8192，允许 0 到 1048576 的整数。它同�
 ## 安全
 
 CLI 以 MCP 服务用户的权限运行，可能修改或删除数据或调用付费服务。执行前核实命令并获得必要确认；服务不强制执行用户确认。命令不通过 shell 执行，但 CLI 自身权限与行为仍然存在。仅连接可信客户端，不要将 stdio 服务直接暴露到网络。
+
+## 项目结构
+
+```text
+douyin-world-mcp/
+├── douyin-world-mcp.cjs
+├── result-store.cjs
+├── package.json
+├── README.md
+└── tests/
+    ├── douyin-world-mcp.test.cjs
+    └── fixtures/
+        └── douyin-world-mcp-fixture.cjs
+```
+
+根目录仅保留运行入口及支持文件；测试和模拟 CLI 独立存放，不参与正式运行。
 
 ## 测试
 

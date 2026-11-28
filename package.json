@@ -8,6 +8,6 @@
   },
   "scripts": {
     "start": "node douyin-world-mcp.cjs",
-    "test": "node --test douyin-world-mcp.test.cjs"
+    "test": "node --test tests/douyin-world-mcp.test.cjs"
   }
 }
