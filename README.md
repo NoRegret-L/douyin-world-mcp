@@ -13,15 +13,13 @@ cd douyin-world-mcp
 
 已有仓库使用 `git pull --ff-only` 更新，不需要 npm install。
 
-## Agent 自动配置（推荐）
+## Agent Prompt（推荐）
 
-将以下提示词直接发送给支持终端操作的 Agent，无需指定客户端或手动填写路径。
+将以下提示词直接发送给 Agent：
 
 ```text
-Set up douyin-world MCP from https://github.com/NoRegret-L/douyin-world-mcp and follow the repository's complete README.md instructions now. Clone it into a persistent local directory or reuse an existing checkout without overwriting local changes. Detect the current environment and use the appropriate MCP configuration method. Verify prerequisites, run the tests, and register the server using its actual absolute path. Preserve existing settings and MCP servers. Verify that the server is registered and that its tools are available. If a restart or manual action is required, report the exact steps. Do not execute commands that modify business data or incur charges. Report the configuration result and any remaining blockers.
+Set up douyin-world MCP from https://github.com/NoRegret-L/douyin-world-mcp. Read the complete README and follow its setup instructions. Preserve existing settings and verify the MCP connection.
 ```
-
-若 Agent 无终端或配置文件权限，请使用下方手动配置方法。
 
 ## 客户端配置
 
